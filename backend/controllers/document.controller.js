@@ -1,19 +1,18 @@
-import fs from "fs/promises";
 import { v2 as cloudinary } from "cloudinary";
 
 import Document from "../models/document.model.js";
 import Application from "../models/application.model.js";
 
 
-// helper to safely remove local temp file
-const removeLocalFile = async (filePath) => {
-  try {
-    if (filePath) {
-      await fs.unlink(filePath);
-    }
-  } catch (error) {
-    // ignore cleanup error
-  }
+// Upload a buffer directly to Cloudinary (works with memoryStorage)
+const uploadBufferToCloudinary = (buffer, options = {}) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(options, (error, result) => {
+      if (error) return reject(error);
+      resolve(result);
+    });
+    stream.end(buffer);
+  });
 };
 
 
@@ -32,7 +31,6 @@ export const uploadDocument = async (req, res) => {
     }
 
     if (!type) {
-      await removeLocalFile(req.file.path);
       return res.status(400).json({
         success: false,
         message: "Document type is required",
@@ -50,7 +48,6 @@ export const uploadDocument = async (req, res) => {
     ];
 
     if (!allowedTypes.includes(type)) {
-      await removeLocalFile(req.file.path);
       return res.status(400).json({
         success: false,
         message: "Invalid document type",
@@ -69,19 +66,16 @@ export const uploadDocument = async (req, res) => {
 
     // student can upload only for own application
     if (application.studentId.toString() !== studentId) {
-      await removeLocalFile(req.file.path);
       return res.status(403).json({
         success: false,
         message: "You are not allowed to upload documents for this application",
       });
     }
 
-    const result = await cloudinary.uploader.upload(req.file.path, {
+    const result = await uploadBufferToCloudinary(req.file.buffer, {
       folder: "ccog/documents",
       resource_type: "auto",
     });
-
-    await removeLocalFile(req.file.path);
 
     const document = await Document.create({
       studentId,
@@ -101,10 +95,6 @@ export const uploadDocument = async (req, res) => {
       document,
     });
   } catch (error) {
-    if (req.file?.path) {
-      await removeLocalFile(req.file.path);
-    }
-
     return res.status(500).json({
       success: false,
       message: error.message,
