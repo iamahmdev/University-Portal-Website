@@ -1,6 +1,17 @@
 import Course from "../models/course.model.js";
 import { v2 as cloudinary } from "cloudinary";
 
+// Upload a buffer directly to Cloudinary (works with memoryStorage)
+const uploadBufferToCloudinary = (buffer, options = {}) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(options, (error, result) => {
+      if (error) return reject(error);
+      resolve(result);
+    });
+    stream.end(buffer);
+  });
+};
+
 
 // ✅ Create Course (Admin)
 export const createCourse = async (req, res) => {
@@ -12,7 +23,7 @@ export const createCourse = async (req, res) => {
 
     // upload image if provided
     if (req.file) {
-      const result = await cloudinary.uploader.upload(req.file.path, {
+      const result = await uploadBufferToCloudinary(req.file.buffer, {
         folder: "ccog/courses",
       });
 
@@ -110,7 +121,7 @@ export const updateCourse = async (req, res) => {
         await cloudinary.uploader.destroy(course.thumbnailPublicId);
       }
 
-      const result = await cloudinary.uploader.upload(req.file.path, {
+      const result = await uploadBufferToCloudinary(req.file.buffer, {
         folder: "ccog/courses",
       });
 

@@ -1,5 +1,5 @@
 import express from "express";
-import multer from "multer";
+import { upload } from "../config/multer.js";
 
 import {
   createCourse,
@@ -13,9 +13,6 @@ import { protect } from "../middlewares/auth.middleware.js";
 import { adminOnly } from "../middlewares/admin.middleware.js";
 
 const router = express.Router();
-
-// multer setup (temporary local storage)
-const upload = multer({ dest: "uploads/" });
 
 
 // ✅ Public Routes

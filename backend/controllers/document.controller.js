@@ -57,7 +57,6 @@ export const uploadDocument = async (req, res) => {
     const application = await Application.findById(applicationId);
 
     if (!application) {
-      await removeLocalFile(req.file.path);
       return res.status(404).json({
         success: false,
         message: "Application not found",

@@ -1,5 +1,5 @@
 import express from "express";
-import multer from "multer";
+import { upload } from "../config/multer.js";
 
 import {
   uploadDocument,
@@ -13,8 +13,6 @@ import { protect } from "../middlewares/auth.middleware.js";
 import { adminOnly } from "../middlewares/admin.middleware.js";
 
 const router = express.Router();
-
-const upload = multer({ dest: "uploads/" });
 // Student routes
 router.post(
   "/upload/:applicationId",
